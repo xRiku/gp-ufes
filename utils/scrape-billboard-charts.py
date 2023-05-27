@@ -4,15 +4,16 @@ import billboard
 import pandas as pd
 
 
-def scrape(last_date, max_date):
-    # Começa a calcular o tempo utilizado
-    start_time = time.time()
+def scrape(last_date, max_date, output_file_name):
     curr_date = last_date
-    chart_entries = []
-    while curr_date >= max_date:
-        nc = billboard.ChartData("hot-100", curr_date)
-
-        for track in nc:
+    allow_header = True if curr_date == last_date else False
+    max_chart_date = billboard.ChartData("hot-100", max_date).date
+    while (
+        curr_chart_date := (chart := billboard.ChartData("hot-100", curr_date)).date
+    ) >= max_chart_date:
+        chart_entries = []
+        # Itera sobre as músicas da semana
+        for track in chart:
             # Tratamento para designar o principal artista
             artist_list = track.artist.split(" ")
             main_artist = artist_list[0]
@@ -32,25 +33,22 @@ def scrape(last_date, max_date):
                     "artist": main_artist,
                     "rank": track.rank,
                     "weeks": track.weeks,
+                    "date": chart.date,
                 }
             )
+        entries = pd.DataFrame(chart_entries)
+        entries.to_csv(output_file_name, mode="a", index=False, header=allow_header)
+        if curr_chart_date == max_chart_date:
+            return
         # Decrementa uma semana a cada iteração
         curr_date -= timedelta(days=7)
 
-    # Termina de calcular o tempo gasto
-    time_diff = time.time() - start_time
-    print(f"Scrapping time: {time_diff:.2f}s")
-    return chart_entries
-
 
 def main():
+    output_file_name = "billboard_db_definitive.csv"
     last_date = date.fromisoformat("2022-01-01")
-    max_date = date.fromisoformat("2021-12-01")
-    chart_entries = scrape(last_date, max_date)
-    # print(chart_entries)
-    entries = pd.DataFrame(chart_entries)
-    # print(entries)
-    entries.to_csv("billboard_db2.csv", index=False)
+    max_date = date.fromisoformat("1958-08-03")
+    scrape(last_date, max_date, output_file_name)
 
 
 if __name__ == "__main__":
