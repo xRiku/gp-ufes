@@ -6,11 +6,11 @@ import pandas as pd
 
 def scrape(last_date, max_date, output_file_name):
     curr_date = last_date
-    allow_header = True if curr_date == last_date else False
     max_chart_date = billboard.ChartData("hot-100", max_date).date
     while (
         curr_chart_date := (chart := billboard.ChartData("hot-100", curr_date)).date
     ) >= max_chart_date:
+        allow_header = True if curr_date == last_date else False
         chart_entries = []
         # Itera sobre as músicas da semana
         for track in chart:
